@@ -18,7 +18,8 @@ BLUE = (0, 100, 255)
 BROWN = (150, 100, 50)
 SKY = (0, 200, 255)
 YELLOW = (255, 255, 0)
-GREY = (100, 100, 100)
+GRAY = (100, 100, 100)
+DARK_GREY = (75, 75, 75)
 
 charW = 20
 charH = 35
@@ -94,12 +95,12 @@ def createSpaceLevel():
     for x in block_x:
         block_y = random.randint(0, 2)
         if block_y == 0:
-            block = {"rect": pygame.Rect(WINDOWWIDTH + x, terrain.top - blockD, blockD, blockD), "color": GREY}
+            block = {"rect": pygame.Rect(WINDOWWIDTH + x, terrain.top - blockD, blockD, blockD), "color": GRAY}
         elif block_y == 1:
             block = {"rect": pygame.Rect(WINDOWWIDTH + x, window.get_rect().centery - (blockD / 2), blockD, blockD),
-                     "color": GREY}
+                     "color": GRAY}
         else:
-            block = {"rect": pygame.Rect(WINDOWWIDTH + x, ceiling.bottom, blockD, blockD), "color": GREY}
+            block = {"rect": pygame.Rect(WINDOWWIDTH + x, ceiling.bottom, blockD, blockD), "color": GRAY}
         blocks.append(block)
 
 
@@ -154,7 +155,8 @@ def dirtLevel():
                         speed_up = 0
 
             for i in blocks:
-                if char.colliderect(i["rect"]) and char.bottom > i["rect"].top + 25 and char.right <= i["rect"].left + 10:
+                if char.colliderect(i["rect"]) and char.bottom > i["rect"].top + 25 and char.right <= i[
+                    "rect"].left + 10:
                     playing = False
                 if ((char.colliderect(i["rect"]) and char.bottom <= i["rect"].top + 12) or (
                         char.colliderect(i["rect"]) and grav >= 10)) and grav >= up:
@@ -295,7 +297,8 @@ def spaceLevel():
             score_rect.topright = window.get_rect().topright
             high_score_rect.topright = score_rect.bottomright
             frame_count += 1
-            char.centery += grav
+            if not on_ground:
+                char.centery += grav
 
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -305,7 +308,7 @@ def spaceLevel():
                     if frame_count >= grace_period:
                         if event.key == K_SPACE:
                             grav_dir *= -1
-                            char.centery += grav_dir * 5
+                            char.centery += grav_dir
                         elif event.key == K_d or event.key == K_RIGHT:
                             speed_up = 2
                         elif event.key == K_a or event.key == K_LEFT:
@@ -322,9 +325,26 @@ def spaceLevel():
                 i["rect"].centerx -= game_speed
                 if i["rect"].right < 0:
                     i["rect"].centerx += levelSize
-                pygame.draw.rect(window, GREY, i["rect"])
+                if i["rect"].colliderect(char):
+                    collided = True
+                if i["rect"].colliderect(char):
+                    if checkOnGround(i, grav_dir):
+                        on_ground = True
+                        grav = 0
+                        if grav_dir > 0:
+                            char.bottom = i["rect"].top
+                        else:
+                            char.top = i["rect"].bottom
+                    else:
+                        playing = False
+                pygame.draw.rect(window, GRAY, i["rect"])
+            on_ground = collided
+            if frame_count > grace_period and not on_ground:
+                grav += 0.5 * grav_dir
             game_speed += 1 / len(blocks)
             pygame.draw.rect(window, YELLOW, char)
+            pygame.draw.rect(window, DARK_GREY, terrain)
+            pygame.draw.rect(window, DARK_GREY, ceiling)
             if frame_count <= grace_period and frame_count % 20 >= 10:
                 pygame.draw.rect(window, BLACK, char)
             window.blit(score, score_rect)
@@ -334,9 +354,16 @@ def spaceLevel():
             mainClock.tick(40)
     return high_score_temp
 
-def checkCollide(i,grav_dir):
-    print("")
 
+def checkOnGround(i, grav_dir):
+    rect = i["rect"]
+    if grav_dir > 0:
+        if char.bottom <= rect.top + 20:
+            return True
+    else:
+        if char.top >= rect.bottom - 20:
+            return True
+    return False
 
 
 while True:
