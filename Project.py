@@ -7,6 +7,7 @@ pygame.init()
 mainClock = pygame.time.Clock()
 WINDOWWIDTH = 700
 WINDOWHEIGHT = 300
+jesus = pygame.image.load("jesus.png")
 window = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), 0, 32)
 pygame.display.set_caption('Jesus Jumps')
 
@@ -29,6 +30,7 @@ holeD = 75
 levelSize = 5000
 colorVariance = 20
 xVariance = 20
+jesus = pygame.transform.scale(jesus,(charW,charH))
 char = pygame.Rect(0 + charW * 3, WINDOWHEIGHT / 2 - charH / 2, charW, charW)
 terrain = pygame.Rect(0, WINDOWHEIGHT - terrainH, WINDOWWIDTH, terrainH)
 ceiling = pygame.Rect(0, 0, WINDOWWIDTH, terrainH)
@@ -155,8 +157,7 @@ def dirtLevel():
                         speed_up = 0
 
             for i in blocks:
-                if char.colliderect(i["rect"]) and char.bottom > i["rect"].top + 25 and char.right <= i[
-                    "rect"].left + 10:
+                if char.colliderect(i["rect"]) and char.bottom > i["rect"].top + 25 and char.right <= i["rect"].left + 10:
                     playing = False
                 if ((char.colliderect(i["rect"]) and char.bottom <= i["rect"].top + 12) or (
                         char.colliderect(i["rect"]) and grav >= 10)) and grav >= up:
@@ -184,7 +185,7 @@ def dirtLevel():
                         game_speed += 1 / len(blocks)
                 pygame.draw.rect(window, i["color"], i["rect"])
             pygame.draw.rect(window, BROWN, terrain)
-            pygame.draw.rect(window, YELLOW, char)
+            window.blit(jesus, char)
             if frame_count <= grace_period and frame_count % 20 >= 10:
                 pygame.draw.rect(window, SKY, char)
             window.blit(score, score_rect)
@@ -276,9 +277,10 @@ def spaceLevel():
     while not exit:
         playing = True
         on_ground = False
+        space_pressed = False
         grav = 0
         up = 0
-        game_speed = 3
+        game_speed = 2.5
         frame_count = 0
         speed_up = 0
         score_counter = 0
@@ -299,7 +301,6 @@ def spaceLevel():
             frame_count += 1
             if not on_ground:
                 char.centery += grav
-
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
@@ -307,7 +308,7 @@ def spaceLevel():
                 if event.type == KEYDOWN:
                     if frame_count >= grace_period:
                         if event.key == K_SPACE:
-                            grav_dir *= -1
+                            space_pressed = True
                             char.centery += grav_dir
                         elif event.key == K_d or event.key == K_RIGHT:
                             speed_up = 2
@@ -317,36 +318,55 @@ def spaceLevel():
                         exit = True
                         playing = False
                 if event.type == KEYUP:
-                    if event.key == K_d or event.key == K_RIGHT:
+                    if event.key == K_SPACE:
+                        space_pressed = False
+                    elif event.key == K_d or event.key == K_RIGHT:
                         speed_up = 0
                     elif event.key == K_a or event.key == K_LEFT:
                         speed_up = 0
+            if space_pressed and on_ground:
+                grav_dir *= -1
+                char.centery += grav_dir*2
             for i in blocks:
-                i["rect"].centerx -= game_speed
+                i["rect"].centerx -= game_speed+speed_up
                 if i["rect"].right < 0:
                     i["rect"].centerx += levelSize
                 if i["rect"].colliderect(char):
                     collided = True
-                if i["rect"].colliderect(char):
                     if checkOnGround(i, grav_dir):
                         on_ground = True
                         grav = 0
                         if grav_dir > 0:
-                            char.bottom = i["rect"].top
+                            char.bottom = i["rect"].top+1
                         else:
-                            char.top = i["rect"].bottom
+                            char.top = i["rect"].bottom-1
                     else:
                         playing = False
                 pygame.draw.rect(window, GRAY, i["rect"])
-            on_ground = collided
+            if collided:
+                on_ground = True
+                grav = 0
+            else:
+                on_ground = False
+            if char.bottom >= terrain.top:
+                on_ground = True
+                char.bottom = terrain.top
+                grav = 0
+            if char.top <= ceiling.bottom:
+                on_ground = True
+                char.top = ceiling.bottom
+                grav = 0
             if frame_count > grace_period and not on_ground:
-                grav += 0.5 * grav_dir
-            game_speed += 1 / len(blocks)
+                grav += 1 * grav_dir
+            game_speed += 0.1 / len(blocks)
             pygame.draw.rect(window, YELLOW, char)
             pygame.draw.rect(window, DARK_GREY, terrain)
             pygame.draw.rect(window, DARK_GREY, ceiling)
             if frame_count <= grace_period and frame_count % 20 >= 10:
                 pygame.draw.rect(window, BLACK, char)
+            score_counter += (game_speed + speed_up) / 7.5
+            if high_score_temp < score_counter:
+                high_score_temp = score_counter
             window.blit(score, score_rect)
             window.blit(high_score, high_score_rect)
             pygame.display.update()
