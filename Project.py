@@ -6,19 +6,21 @@ from pygame.locals import *
 pygame.init()
 mainClock = pygame.time.Clock()
 
-SCALE = 4
+SCALE = 3
 
 WINDOWWIDTH = 700 * SCALE
 WINDOWHEIGHT = 300*SCALE
-jesus = pygame.image.load("jesus.png")
 window = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), 0, 32)
 pygame.display.set_caption('Jesus Jumps')
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
-RED = (255, 0, 0)
+RED = (175, 0, 0)
+DARK_RED = (150,0,0)
+IDK = (100, 15, 15)
 BLUE = (0, 100, 255)
+DARK_BLUE = (0, 75, 200)
 BROWN = (150, 100, 50)
 SKY = (0, 200, 255)
 YELLOW = (255, 255, 0)
@@ -35,9 +37,17 @@ levelSize = 5000 * SCALE
 colorVariance = 20
 xVariance = 20 * SCALE
 
-jesus = pygame.transform.scale(jesus,(charW,charW))
-jesus_upside_down = pygame.transform.flip(jesus,False,True)
-jesus_rotated = pygame.transform.rotate(jesus,-90)
+jesus = pygame.image.load("jesus.png")
+wave = pygame.image.load("wave.png")
+crate = pygame.image.load("crate.png")
+cross = pygame.image.load("cross.png")
+jesus = pygame.transform.scale(jesus, (charW, charW))
+wave = pygame.transform.scale(wave,(blockD,blockD))
+crate = pygame.transform.scale(crate,(blockD,blockD))
+cross = pygame.transform.scale(cross, (charW,charH))
+cross = pygame.transform.rotate(cross, 40)
+jesus_upside_down = pygame.transform.flip(jesus,False, True)
+jesus_rotated = pygame.transform.rotate(jesus, -90)
 
 char = pygame.Rect(0 + charW * 3, WINDOWHEIGHT / 2 - charH / 2, charW, charW)
 terrain = pygame.Rect(0, WINDOWHEIGHT - terrainH, WINDOWWIDTH, terrainH)
@@ -73,7 +83,7 @@ def createDirtLevel():
         blocks.append(block_l2)
 
 
-def createCloudLevel():
+def createWaterLevel():
     block_x = []
     block_y = []
     blocks.clear()
@@ -87,7 +97,7 @@ def createCloudLevel():
     for x in block_x:
         for y in range(30):
             block = {"rect": pygame.Rect(WINDOWWIDTH + random.randint(x - xVariance, x + xVariance),
-                                         random.randint(0, WINDOWHEIGHT - blockD), blockD, blockD), "color": WHITE}
+                                         random.randint(0, WINDOWHEIGHT - blockD), blockD, blockD), "color": DARK_BLUE}
             add = True
             for i in block_y:
                 if block["rect"].colliderect(i):
@@ -96,7 +106,7 @@ def createCloudLevel():
                 blocks.append(block)
 
 
-def createSpaceLevel():
+def createHellLevel():
     blocks.clear()
     block_x = []
     for i in range(levelSize):
@@ -159,16 +169,16 @@ def dirtLevel():
                 if event.type == KEYUP:
                     if event.key == K_SPACE:
                         space_pressed = False
-                    elif event.key == K_d or event.key == K_RIGHT:
+                    if event.key == K_d or event.key == K_RIGHT:
                         speed_up = 0
                     elif event.key == K_a or event.key == K_LEFT:
                         speed_up = 0
 
             for i in blocks:
-                if char.colliderect(i["rect"]) and char.bottom > i["rect"].top + 25 and char.right <= i["rect"].left + 10:
+                if char.colliderect(i["rect"]) and char.bottom > i["rect"].top + 25 * SCALE and char.right <= i["rect"].left + 10 * SCALE:
                     playing = False
-                if ((char.colliderect(i["rect"]) and char.bottom <= i["rect"].top + 12) or (
-                        char.colliderect(i["rect"]) and grav >= 10)) and grav >= up:
+                if ((char.colliderect(i["rect"]) and char.bottom <= i["rect"].top + 12 * SCALE) or (
+                        char.colliderect(i["rect"]) and grav >= 10 * SCALE)) and grav >= up:
                     on_ground = True
                     char.bottom = i["rect"].top
                 elif char.bottom >= terrain.top:
@@ -191,11 +201,11 @@ def dirtLevel():
                     i["rect"].right += levelSize
                     if game_speed <= 10 * SCALE:
                         game_speed += 1 / len(blocks) * SCALE
-                pygame.draw.rect(window, i["color"], i["rect"])
+                window.blit(crate, i["rect"])
             pygame.draw.rect(window, BROWN, terrain)
-            window.blit(jesus, char)
-            if frame_count <= grace_period and frame_count % 20 >= 10:
-                pygame.draw.rect(window, SKY, char)
+            if frame_count > grace_period or frame_count % 20 < 10:
+                window.blit(cross, (char.left - charW / 3, char.top - charW / 1.25))
+                window.blit(jesus, char)
             window.blit(score, score_rect)
             window.blit(high_score, high_score_rect)
             pygame.display.update()
@@ -204,7 +214,7 @@ def dirtLevel():
     return high_score_temp
 
 
-def cloudLevel():
+def waterLevel():
     high_score_temp = highScoreCloud
     exit = False
     while not exit:
@@ -212,18 +222,18 @@ def cloudLevel():
         up = False
         down = False
         vert = 0
-        game_speed = 3 * SCALE
+        game_speed = 4 * SCALE
         frame_count = 0
         jump_count = 0
         speed_up = 0
         score_counter = 0
         grace_period = 50
-        createCloudLevel()
+        createWaterLevel()
         char.centery = window.get_rect().centery
 
         while playing:
             if game_speed <= 10:
-                game_speed += 0.0005 * SCALE
+                game_speed += 0.001 * SCALE
             score = basicFont.render(str(int(score_counter) * 10), True, WHITE, None)
             high_score = basicFontSmall.render(str(int(high_score_temp) * 10), True, WHITE, None)
             score_rect = score.get_rect()
@@ -238,29 +248,37 @@ def cloudLevel():
                     pygame.quit()
                     sys.exit()
                 if event.type == KEYDOWN:
-                    if event.key == K_UP and frame_count >= grace_period:
+                    if (event.key == K_UP or event.key == K_w) and frame_count >= grace_period:
                         up = True
-                    elif event.key == K_DOWN and frame_count >= grace_period:
+                    elif (event.key == K_DOWN or event.key == K_s) and frame_count >= grace_period:
                         down = True
                     elif event.key == K_BACKSPACE:
                         exit = True
                         playing = False
+                    elif (event.key == K_d or event.key == K_RIGHT) and frame_count >= grace_period:
+                        speed_up = 2 * SCALE
+                    elif (event.key == K_a or event.key == K_LEFT) and frame_count >= grace_period:
+                        speed_up = -2 * SCALE
                 if event.type == KEYUP:
-                    if event.key == K_UP:
+                    if event.key == K_UP or event.key == K_w:
                         up = False
-                    if event.key == K_DOWN:
+                    if event.key == K_DOWN or event.key == K_s:
                         down = False
+                    if event.key == K_d or event.key == K_RIGHT:
+                        speed_up = 0
+                    elif event.key == K_a or event.key == K_LEFT:
+                        speed_up = 0
 
             for i in blocks:
                 if char.colliderect(i["rect"]):
                     playing = False
                 i["rect"].centerx -= game_speed + speed_up
-                score_counter += game_speed / (5000 * SCALE)
+                score_counter += (game_speed + speed_up) / (2500 * SCALE)
                 if high_score_temp < score_counter:
                     high_score_temp = score_counter
                 if i["rect"].right <= 0:
                     i["rect"].right += levelSize
-                pygame.draw.rect(window, i["color"], i["rect"])
+                window.blit(wave, i["rect"])
 
             if up:
                 vert -= 0.5 * SCALE
@@ -274,9 +292,8 @@ def cloudLevel():
             if char.bottom < 0:
                 char.bottom = WINDOWHEIGHT
 
-            window.blit(jesus_rotated, char)
-            if frame_count <= grace_period and frame_count % 20 >= 10:
-                pygame.draw.rect(window, SKY, char)
+            if frame_count > grace_period or frame_count % 20 < 10:
+                window.blit(jesus_rotated, char)
             window.blit(score, score_rect)
             window.blit(high_score, high_score_rect)
             pygame.display.update()
@@ -285,7 +302,7 @@ def cloudLevel():
     return high_score_temp
 
 
-def spaceLevel():
+def hellLevel():
     high_score_temp = highScoreSpace
     exit = False
     while not exit:
@@ -300,7 +317,7 @@ def spaceLevel():
         score_counter = 0
         grace_period = 50
         grav_dir = 1
-        createSpaceLevel()
+        createHellLevel()
         char.centery = window.get_rect().centery
 
         while playing:
@@ -356,7 +373,7 @@ def spaceLevel():
                             char.top = i["rect"].bottom - 1
                     else:
                         playing = False
-                pygame.draw.rect(window, GRAY, i["rect"])
+                pygame.draw.rect(window, RED, i["rect"])
             if collided:
                 on_ground = True
                 grav = 0
@@ -377,17 +394,17 @@ def spaceLevel():
                 window.blit(jesus, char)
             else:
                 window.blit(jesus_upside_down, char)
-            pygame.draw.rect(window, DARK_GREY, terrain)
-            pygame.draw.rect(window, DARK_GREY, ceiling)
+            pygame.draw.rect(window, DARK_RED, terrain)
+            pygame.draw.rect(window, DARK_RED, ceiling)
             if frame_count <= grace_period and frame_count % 20 >= 10:
-                pygame.draw.rect(window, BLACK, char)
-            score_counter += (game_speed + speed_up) / (7.5 * SCALE)
+                pygame.draw.rect(window, IDK, char)
+            score_counter += (game_speed + speed_up) / (6 * SCALE)
             if high_score_temp < score_counter:
                 high_score_temp = score_counter
             window.blit(score, score_rect)
             window.blit(high_score, high_score_rect)
             pygame.display.update()
-            window.fill(BLACK)
+            window.fill(IDK)
             mainClock.tick(40)
     return high_score_temp
 
@@ -405,6 +422,6 @@ def checkOnGround(i, grav_dir):
 
 while True:
 
-    highScoreSpace = spaceLevel()
-    highScoreCloud = cloudLevel()
+    highScoreSpace = hellLevel()
+    highScoreCloud = waterLevel()
     highScoreDirt = dirtLevel()
