@@ -443,6 +443,12 @@ def checkOnGround(i, grav_dir):
 
 
 while True:
-    highScoreSpace = hellLevel()
-    highScoreCloud = waterLevel()
-    highScoreDirt = dirtLevel()
+    mousePos = char = pygame.Rect((pygame.mouse.get_pos()), 1,1)
+    hellRect = pygame.Rect(WINDOWWIDTH,WINDOWHEIGHT,WINDOWWIDTH/10,WINDOWHEIGHT/10)
+    for event in pygame.event.get:
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if mousePos.colliderect(hellRect):
+                highScoreSpace = hellLevel()
+    pygame.draw.rect(window, REDDISH, hellRect)
+    pygame.display.update()
+
