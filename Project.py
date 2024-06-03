@@ -1,3 +1,5 @@
+import functools
+
 import pygame
 import random
 import sys
@@ -52,9 +54,9 @@ fish8 = pygame.image.load("fish8.png")
 fish = [fish1, fish2, fish3, fish4, fish5, fish6, fish7, fish8]
 rock = pygame.image.load("not_netherrack.jpeg")
 y = 0
-for x in fish:
-    x = pygame.transform.scale(x, (blockD, blockD))
-    fish[y] = x
+for i in fish:
+    i = pygame.transform.scale(i, (blockD, blockD))
+    fish[y] = i
     y += 1
 jesus = pygame.transform.scale(jesus, (charW, charW))
 wave = pygame.transform.scale(wave, (blockD, blockD))
@@ -443,12 +445,25 @@ def checkOnGround(i, grav_dir):
 
 
 while True:
-    mousePos = char = pygame.Rect((pygame.mouse.get_pos()), 1,1)
-    hellRect = pygame.Rect(WINDOWWIDTH,WINDOWHEIGHT,WINDOWWIDTH/10,WINDOWHEIGHT/10)
-    for event in pygame.event.get:
+    rectW = WINDOWWIDTH/5
+    rectH = WINDOWHEIGHT/10
+    mousePos = pygame.mouse.get_pos()
+    dirtRect = {"rect": pygame.Rect(WINDOWWIDTH / 2 - rectW / 2, WINDOWHEIGHT / 2 - rectH / 2, rectW, rectH),
+                "color": BROWN, "level": dirtLevel(), "score": highScoreDirt}
+    waterRect = {"rect": pygame.Rect(WINDOWWIDTH / 2 - rectW / 2, WINDOWHEIGHT / 2 - rectH / 2, rectW, rectH),
+                 "color": BLUE, "level": waterLevel(), "score": highScoreCloud}
+    hellRect = {"rect": pygame.Rect(WINDOWWIDTH / 2 - rectW / 2, WINDOWHEIGHT / 2 - rectH / 2, rectW, rectH),
+                "color": REDDISH, "level": hellLevel(), "score": highScoreSpace}
+    rects = [functools.partial(dirtLevel), waterRect, hellRect]
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if mousePos.colliderect(hellRect):
-                highScoreSpace = hellLevel()
-    pygame.draw.rect(window, REDDISH, hellRect)
+            for i in rects:
+                if i["rect"].collidepoint(mousePos):
+                    i["score"] = i["level"]
+    window.fill(LIGHT_BLUE)
+    for i in rects:
+        pygame.draw.rect(window, i["color"], i["rect"])
     pygame.display.update()
-
