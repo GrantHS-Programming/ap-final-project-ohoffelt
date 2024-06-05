@@ -72,6 +72,7 @@ terrain = pygame.Rect(0, WINDOWHEIGHT - terrainH, WINDOWWIDTH, terrainH)
 ceiling = pygame.Rect(0, 0, WINDOWWIDTH, terrainH)
 basicFontSmall = pygame.font.SysFont('Arial', 20 * SCALE)
 basicFont = pygame.font.SysFont('Arial', 35 * SCALE)
+titleFont = pygame.font.SysFont("athelas", 50 * SCALE)
 highScoreDirt = 0
 highScoreCloud = 0
 highScoreSpace = 0
@@ -443,27 +444,38 @@ def checkOnGround(i, grav_dir):
             return True
     return False
 
-
+print(pygame.font.get_fonts())
 while True:
     rectW = WINDOWWIDTH/5
     rectH = WINDOWHEIGHT/10
     mousePos = pygame.mouse.get_pos()
-    dirtRect = {"rect": pygame.Rect(WINDOWWIDTH / 2 - rectW / 2, WINDOWHEIGHT / 2 - rectH / 2, rectW, rectH),
-                "color": BROWN, "level": dirtLevel(), "score": highScoreDirt}
+    dirtRect = {"rect": pygame.Rect(WINDOWWIDTH / 2 - rectW / 2, WINDOWHEIGHT / 2 - rectH / 2 - rectH * 1.5, rectW, rectH),
+                "color": BROWN, "score": highScoreDirt}
     waterRect = {"rect": pygame.Rect(WINDOWWIDTH / 2 - rectW / 2, WINDOWHEIGHT / 2 - rectH / 2, rectW, rectH),
-                 "color": BLUE, "level": waterLevel(), "score": highScoreCloud}
-    hellRect = {"rect": pygame.Rect(WINDOWWIDTH / 2 - rectW / 2, WINDOWHEIGHT / 2 - rectH / 2, rectW, rectH),
-                "color": REDDISH, "level": hellLevel(), "score": highScoreSpace}
-    rects = [functools.partial(dirtLevel), waterRect, hellRect]
+                 "color": BLUE, "score": highScoreCloud}
+    hellRect = {"rect": pygame.Rect(WINDOWWIDTH / 2 - rectW / 2, WINDOWHEIGHT / 2 - rectH / 2 + rectH * 1.5, rectW, rectH),
+                "color": REDDISH, "score": highScoreSpace}
+    rects = [dirtRect, waterRect, hellRect]
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
-            for i in rects:
-                if i["rect"].collidepoint(mousePos):
-                    i["score"] = i["level"]
+            if dirtRect["rect"].collidepoint(mousePos):
+                highScoreDirt = dirtLevel()
+            elif waterRect["rect"].collidepoint(mousePos):
+                highScoreCloud = waterLevel()
+            elif hellRect["rect"].collidepoint(mousePos):
+                highScoreSpace = hellLevel()
     window.fill(LIGHT_BLUE)
     for i in rects:
         pygame.draw.rect(window, i["color"], i["rect"])
+        score = basicFontSmall.render(str(int(i["score"]) * 10), True, WHITE, None)
+        score_rect = score.get_rect()
+        score_rect.center = i["rect"].center
+        window.blit(score,score_rect)
+    title = titleFont.render("JESUS JUMPS", True, WHITE, None)
+    title_rect = title.get_rect()
+    title_rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/10)
+    window.blit(title, title_rect)
     pygame.display.update()
