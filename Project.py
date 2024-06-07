@@ -216,13 +216,13 @@ def dirtLevel():
                 if on_ground and space_pressed and grav <= 50:
                     up = 12 * SCALE
                 i["rect"].centerx -= game_speed + speed_up
-                score_counter += (game_speed + speed_up) / (500 * SCALE)
+                score_counter += (game_speed + speed_up) / (700 * SCALE)
                 if high_score_temp < score_counter:
                     high_score_temp = score_counter
                 if i["rect"].right <= 0:
                     i["rect"].right += levelSize
                     if game_speed <= 10 * SCALE:
-                        game_speed += 1 / len(blocks) * SCALE
+                        game_speed += 2 / len(blocks) * SCALE
                 window.blit(crate, i["rect"])
             pygame.draw.rect(window, BROWN, terrain)
             if frame_count > grace_period or frame_count % 20 < 10:
@@ -297,7 +297,7 @@ def waterLevel():
                 if char.colliderect(i["rect"]):
                     playing = False
                 i["rect"].centerx -= game_speed + speed_up
-                score_counter += (game_speed + speed_up) / (2500 * SCALE)
+                score_counter += (game_speed + speed_up) / (3500 * SCALE)
                 if high_score_temp < score_counter:
                     high_score_temp = score_counter
                 if i["rect"].right <= 0:
@@ -423,7 +423,7 @@ def hellLevel():
             pygame.draw.rect(window, DARK_RED, ceiling)
             if frame_count <= grace_period and frame_count % 20 >= 10:
                 pygame.draw.rect(window, REDDISH, char)
-            score_counter += (game_speed + speed_up) / (6 * SCALE)
+            score_counter += (game_speed + speed_up) / (5 * SCALE)
             if high_score_temp < score_counter:
                 high_score_temp = score_counter
             window.blit(score, score_rect)
@@ -444,7 +444,6 @@ def checkOnGround(i, grav_dir):
             return True
     return False
 
-print(pygame.font.get_fonts())
 while True:
     rectW = WINDOWWIDTH/5
     rectH = WINDOWHEIGHT/10
@@ -474,6 +473,8 @@ while True:
         score_rect = score.get_rect()
         score_rect.center = i["rect"].center
         window.blit(score,score_rect)
+    if highScoreDirt + highScoreCloud + highScoreSpace >= 4000:
+        print("gamer")
     title = titleFont.render("JESUS JUMPS", True, WHITE, None)
     title_rect = title.get_rect()
     title_rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/10)
