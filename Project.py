@@ -109,7 +109,7 @@ def createWaterLevel():
     blocks.clear()
     add = True
     for i in range(levelSize):
-        if i % (250 * SCALE) == 0:
+        if i % (300 * SCALE) == 0:
             block_x.append(i)
     for i in block_x:
         block_y.append(pygame.Rect(WINDOWWIDTH + i, random.randint(0, WINDOWHEIGHT - holeD), holeD,
@@ -305,9 +305,9 @@ def waterLevel():
                 window.blit(i["fish"], i["rect"])
 
             if up:
-                vert -= 0.2 * SCALE
+                vert -= 0.175 * SCALE
             if down:
-                vert += 0.2 * SCALE
+                vert += 0.175 * SCALE
             if not (up or down):
                 vert /= 1.05
 
